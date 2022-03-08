@@ -11,7 +11,35 @@ class GamePage extends StatefulWidget {
   _GamePageState createState() => _GamePageState();
 }
 
-class _GamePageState extends State<GamePage> {
+class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
+  late AnimationController _timerController;
+  late Animation<Duration> _timerAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _timerController = AnimationController(
+      vsync: this,
+      duration: const Duration(minutes: 3),
+    );
+
+    _timerAnimation = Tween<Duration>(
+      begin: const Duration(minutes: 3),
+      end: Duration.zero,
+    ).animate(_timerController)
+      ..addListener(() {
+        setState(() {});
+      })
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          context.read<GameBloc>().add(GameOver());
+        }
+      });
+
+    _timerController.forward();
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -27,19 +55,30 @@ class _GamePageState extends State<GamePage> {
               child: Column(
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       Text(
                         'Player: ${state.player}',
                         style: const TextStyle(fontSize: 20),
                       ),
+                      Timer(timerAnimation: _timerAnimation),
                       Text(
-                        'Score: ${state.point}',
+                        'Lives: ${state.lives}',
                         style: const TextStyle(fontSize: 20),
                       ),
                     ],
                   ),
                   const Spacer(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${state.point}',
+                        style: const TextStyle(fontSize: 40),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -50,6 +89,12 @@ class _GamePageState extends State<GamePage> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 16),
+                  if (state.isEnd)
+                    ElevatedButton(
+                      onPressed: () {},
+                      child: const Text('Restart'),
+                    ),
                   const Spacer()
                 ],
               ),
@@ -64,12 +109,7 @@ class _GamePageState extends State<GamePage> {
     List<TableRow> rows = [];
     for (int row = 0; row < state.gameTable.length; row++) {
       rows.add(TableRow(
-        children: generateTableCell(
-          context,
-          state.gameTable[row],
-          state.rowStatus,
-          row,
-        ),
+        children: generateTableCell(context, state, row),
       ));
     }
     return rows;
@@ -77,31 +117,34 @@ class _GamePageState extends State<GamePage> {
 
   List<Widget> generateTableCell(
     BuildContext context,
-    List<int> row,
-    List<CellStatus> status,
+    GameState state,
     int rowIndex,
   ) {
     List<Widget> cells = [];
+    final status = state.rowStatus[rowIndex];
+    final row = state.gameTable[rowIndex];
 
     void onClickCell(int cellPoint) {
       context.read<GameBloc>().add(GameCellPressed(rowIndex, cellPoint));
       setState(() {});
+      if (rowIndex == state.matrix) {
+        _timerController.stop();
+      }
     }
 
     for (var cell in row) {
       cells.add(
         Cell(
           content: GestureDetector(
-            onTap: status[rowIndex] == CellStatus.active
+            onTap: status == CellStatus.active || state.isEnd
                 ? () {
                     onClickCell(cell);
                   }
                 : null,
             child: Container(
               decoration: BoxDecoration(
-                color: status[rowIndex] == CellStatus.inactive
-                    ? Colors.grey
-                    : Colors.white,
+                color:
+                    status == CellStatus.inactive ? Colors.grey : Colors.white,
               ),
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
@@ -109,7 +152,7 @@ class _GamePageState extends State<GamePage> {
                   child: Text(
                     "$cell",
                     style: TextStyle(
-                        color: status[rowIndex] == CellStatus.inactive
+                        color: status == CellStatus.inactive
                             ? Colors.grey
                             : Colors.black),
                   ),
@@ -121,5 +164,27 @@ class _GamePageState extends State<GamePage> {
       );
     }
     return cells;
+  }
+}
+
+class Timer extends StatelessWidget {
+  final Animation<Duration> timerAnimation;
+
+  const Timer({
+    Key? key,
+    required this.timerAnimation,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: timerAnimation,
+      builder: (context, child) {
+        return Text(
+          'Time: ${timerAnimation.value.inMinutes}:${timerAnimation.value.inSeconds % 60}',
+          style: const TextStyle(fontSize: 20),
+        );
+      },
+    );
   }
 }
