@@ -1,7 +1,5 @@
 import 'dart:math';
 
-int randomNumber() => Random().nextInt(1000);
-
 int seedTableGenerator(int range) {
   Random random = Random();
   int randomNumber = random.nextInt(range);
