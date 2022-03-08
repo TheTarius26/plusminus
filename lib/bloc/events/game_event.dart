@@ -7,9 +7,6 @@ class GameCellPressed extends GameEvent {
   GameCellPressed(this.row, this.cellPoint);
 }
 
-class GameEnded extends GameEvent {
-  final bool isWin;
-  final bool isRestart;
+class GameRetryPressed extends GameEvent {}
 
-  GameEnded(this.isWin, this.isRestart);
-}
+class GameOver extends GameEvent {}
