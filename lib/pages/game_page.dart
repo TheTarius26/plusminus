@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:plusminus/bloc/events/game_event.dart';
 import 'package:plusminus/bloc/game_bloc.dart';
 import 'package:plusminus/widgets/cell.dart';
 
@@ -14,15 +15,43 @@ class _GamePageState extends State<GamePage> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => GameBloc(),
+      create: (context) => GameBloc(GameState(
+        difficulty: GameDifficulty.medium,
+        player: 'Tarius',
+      )),
       child: Scaffold(
-        body: BlocBuilder<GameBloc, GameInitialState>(
+        body: BlocBuilder<GameBloc, GameState>(
           builder: (context, state) {
-            return Center(
-              child: Table(
-                border: TableBorder.all(color: Colors.black),
-                defaultColumnWidth: const FixedColumnWidth(40),
-                children: generateTableRow(context, state),
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Player: ${state.player}',
+                        style: const TextStyle(fontSize: 20),
+                      ),
+                      Text(
+                        'Score: ${state.point}',
+                        style: const TextStyle(fontSize: 20),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Table(
+                        border: TableBorder.all(color: Colors.black),
+                        defaultColumnWidth: const FixedColumnWidth(50),
+                        children: generateTableRow(context, state),
+                      ),
+                    ],
+                  ),
+                  const Spacer()
+                ],
               ),
             );
           },
@@ -31,15 +60,14 @@ class _GamePageState extends State<GamePage> {
     );
   }
 
-  List<TableRow> generateTableRow(
-      BuildContext context, GameInitialState state) {
+  List<TableRow> generateTableRow(BuildContext context, GameState state) {
     List<TableRow> rows = [];
-    for (int row = 0; row < state.contentCells.length; row++) {
+    for (int row = 0; row < state.gameTable.length; row++) {
       rows.add(TableRow(
         children: generateTableCell(
           context,
-          state.contentCells[row],
-          state.cellStatus,
+          state.gameTable[row],
+          state.rowStatus,
           row,
         ),
       ));
@@ -50,22 +78,44 @@ class _GamePageState extends State<GamePage> {
   List<Widget> generateTableCell(
     BuildContext context,
     List<int> row,
-    List<GameCellStatus> status,
+    List<CellStatus> status,
     int rowIndex,
   ) {
     List<Widget> cells = [];
 
-    void onClickCell() {
-      context.read<GameBloc>().add(GameCellPressed(rowIndex: rowIndex));
+    void onClickCell(int cellPoint) {
+      context.read<GameBloc>().add(GameCellPressed(rowIndex, cellPoint));
       setState(() {});
     }
 
-    for (int cell = 0; cell < row.length; cell++) {
+    for (var cell in row) {
       cells.add(
         Cell(
           content: GestureDetector(
-            onTap: status[cell] == GameCellStatus.active ? onClickCell : null,
-            child: Text(row[cell].toString()),
+            onTap: status[rowIndex] == CellStatus.active
+                ? () {
+                    onClickCell(cell);
+                  }
+                : null,
+            child: Container(
+              decoration: BoxDecoration(
+                color: status[rowIndex] == CellStatus.inactive
+                    ? Colors.grey
+                    : Colors.white,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Center(
+                  child: Text(
+                    "$cell",
+                    style: TextStyle(
+                        color: status[rowIndex] == CellStatus.inactive
+                            ? Colors.grey
+                            : Colors.black),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       );
