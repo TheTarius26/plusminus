@@ -1,98 +1,98 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:plusminus/bloc/events/game_event.dart';
 import 'package:plusminus/helper/game_setup.dart';
 
-enum GameCellStatus { active, inactive, selected }
+enum CellStatus { active, inactive, selected }
 enum GameDifficulty { easy, medium, hard }
 
-abstract class GameState {}
-
-class GameInitialState extends GameState {
+class GameState {
   GameDifficulty difficulty;
-  String playerName;
-  int matrix;
-  List<GameCellStatus> cellStatus;
-  List<List<int>> contentCells;
-  int point;
+  List<List<int>> gameTable;
+  List<CellStatus> rowStatus;
+  String player;
+  int point, matrix, retryPoint;
+  bool isWin;
 
-  GameInitialState({
-    this.difficulty = GameDifficulty.easy,
-    this.playerName = '',
-    this.matrix = 0,
-    this.cellStatus = const [],
-    this.contentCells = const [],
-    this.point = 0,
-  });
-}
-
-abstract class GameEvent {}
-
-class GameStarted extends GameEvent {
-  final GameDifficulty difficulty;
-  final String playerName;
-
-  GameStarted({
+  GameState({
+    required this.player,
     required this.difficulty,
-    required this.playerName,
+    this.point = 0,
+    this.matrix = 0,
+    this.gameTable = const [],
+    this.rowStatus = const [],
+    this.retryPoint = 3,
+    this.isWin = false,
   });
 }
 
-class GameCellPressed extends GameEvent {
-  final int rowIndex;
+class GameBloc extends Bloc<GameEvent, GameState> {
+  GameBloc(GameState state) : super(state) {
+    _gameSetup();
+    on<GameCellPressed>(_onGameCellPressed);
+    on<GameEnded>(_onGameEnded);
+  }
 
-  GameCellPressed({
-    required this.rowIndex,
-  });
-}
+  @override
+  void onChange(Change<GameState> change) {
+    super.onChange(change);
+  }
 
-class GameBloc extends Bloc<GameEvent, GameInitialState> {
-  GameBloc() : super(GameInitialState()) {
-    on<GameStarted>((event, emit) {
-      state.playerName = event.playerName;
-      if (event.difficulty == GameDifficulty.easy) {
-        state.difficulty = GameDifficulty.easy;
-        state.matrix = 3;
-        setUpCells();
-      } else if (event.difficulty == GameDifficulty.medium) {
-        state.difficulty = GameDifficulty.medium;
-        state.matrix = 4;
-        setUpCells();
-      } else if (event.difficulty == GameDifficulty.hard) {
-        state.difficulty = GameDifficulty.hard;
-        state.matrix = 5;
-        setUpCells();
-      }
-    });
+  void _gameSetup() {
+    if (state.difficulty == GameDifficulty.easy) {
+      state.matrix = 3;
+      state.point = 100;
+    } else if (state.difficulty == GameDifficulty.medium) {
+      state.matrix = 4;
+      state.point = 1000;
+    } else if (state.difficulty == GameDifficulty.hard) {
+      state.matrix = 5;
+      state.point = 10000;
+    }
+    _generateGameTable();
+    _setRowStatus();
+  }
 
-    on<GameCellPressed>((event, emit) {
-      if (state.cellStatus[event.rowIndex] == GameCellStatus.active) {
-        state.cellStatus[event.rowIndex] = GameCellStatus.selected;
-        try {
-          state.cellStatus[event.rowIndex + 1] = GameCellStatus.active;
-        } on RangeError {
-          // do nothing
-        }
-      }
-      emit(state);
+  void _generateGameTable() {
+    final correctList = listCorrect(state.point, state.matrix);
+    state.gameTable = List.generate(state.matrix, (i) {
+      final tempList = List.generate(state.matrix - 1, (j) {
+        return seedTableGenerator(state.point);
+      });
+      tempList.add(correctList[i]);
+      return tempList;
     });
   }
 
-  void setUpCells() {
-    state.point = randomNumber();
-    state.cellStatus =
-        List.generate(state.matrix, (index) => GameCellStatus.inactive);
-    state.cellStatus[0] = GameCellStatus.active;
-    List<int> correctList = listCorrect(state.point, state.matrix);
-
-    state.contentCells = List.generate(state.matrix, (index) {
-      final list = List.generate(state.matrix - 1, (index) {
-        return seedTableGenerator(state.point);
-      });
-      list
-        ..add(correctList[index])
-        ..shuffle();
-      return list;
+  void _setRowStatus() {
+    state.rowStatus = List.generate(state.matrix, (i) {
+      return CellStatus.inactive;
     });
+    state.rowStatus.first = CellStatus.active;
+  }
 
-    print(state.contentCells.toString());
+  void _onGameCellPressed(GameCellPressed event, Emitter<GameState> emit) {
+    state.rowStatus[event.row] = CellStatus.selected;
+    final nextRow =
+        state.rowStatus.indexWhere((element) => element == CellStatus.inactive);
+    if (nextRow != -1) {
+      state.rowStatus[nextRow] = CellStatus.active;
+    }
+    state.point -= event.cellPoint;
+    emit(state);
+  }
+
+  void _onGameEnded(GameEnded event, Emitter<GameState> emit) {
+    if (state.point > 0 || state.point < 0) {
+      state.retryPoint--;
+      if (state.retryPoint == 0) {
+        emit(state);
+      } else {
+        _gameSetup();
+        emit(state);
+      }
+    } else if (state.point == 0) {
+      state.isWin = true;
+      emit(state);
+    }
   }
 }
