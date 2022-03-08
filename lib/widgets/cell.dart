@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class Cell extends StatelessWidget {
-  final String content;
+  final Widget content;
   const Cell({
     Key? key,
     required this.content,
@@ -12,7 +12,7 @@ class Cell extends StatelessWidget {
     return TableCell(
       child: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Center(child: Text(content)),
+        child: Center(child: content),
       ),
     );
   }
