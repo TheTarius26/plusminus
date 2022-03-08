@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:plusminus/helper/number_generator.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:plusminus/bloc/game_bloc.dart';
 import 'package:plusminus/widgets/cell.dart';
 
 class GamePage extends StatefulWidget {
@@ -12,34 +13,63 @@ class GamePage extends StatefulWidget {
 class _GamePageState extends State<GamePage> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Table(
-          border: TableBorder.all(color: Colors.black),
-          defaultColumnWidth: const FixedColumnWidth(40),
-          children: generateTableRow(4),
+    return BlocProvider(
+      create: (context) => GameBloc(),
+      child: Scaffold(
+        body: BlocBuilder<GameBloc, GameInitialState>(
+          builder: (context, state) {
+            return Center(
+              child: Table(
+                border: TableBorder.all(color: Colors.black),
+                defaultColumnWidth: const FixedColumnWidth(40),
+                children: generateTableRow(context, state),
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
-  List<TableRow> generateTableRow(int matrix) {
-    List<TableRow> tableRows = [];
-    for (int i = 0; i < matrix; i++) {
-      tableRows.add(TableRow(
-        children: generateTableCell(matrix),
+  List<TableRow> generateTableRow(
+      BuildContext context, GameInitialState state) {
+    List<TableRow> rows = [];
+    for (int row = 0; row < state.contentCells.length; row++) {
+      rows.add(TableRow(
+        children: generateTableCell(
+          context,
+          state.contentCells[row],
+          state.cellStatus,
+          row,
+        ),
       ));
     }
-    return tableRows;
+    return rows;
   }
 
-  List<Cell> generateTableCell(int matrix) {
-    List<Cell> tableCells = [];
-    for (int i = 0; i < matrix; i++) {
-      tableCells.add(Cell(
-        content: randomGenerator(20),
-      ));
+  List<Widget> generateTableCell(
+    BuildContext context,
+    List<int> row,
+    List<GameCellStatus> status,
+    int rowIndex,
+  ) {
+    List<Widget> cells = [];
+
+    void onClickCell() {
+      context.read<GameBloc>().add(GameCellPressed(rowIndex: rowIndex));
+      setState(() {});
     }
-    return tableCells;
+
+    for (int cell = 0; cell < row.length; cell++) {
+      cells.add(
+        Cell(
+          content: GestureDetector(
+            onTap: status[cell] == GameCellStatus.active ? onClickCell : null,
+            child: Text(row[cell].toString()),
+          ),
+        ),
+      );
+    }
+    return cells;
   }
 }
