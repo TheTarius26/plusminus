@@ -10,8 +10,8 @@ class GameState {
   List<List<int>> gameTable;
   List<CellStatus> rowStatus;
   String player;
-  int point, matrix, retryPoint;
-  bool isWin;
+  int point, matrix, lives;
+  bool isWin, isEnd;
 
   GameState({
     required this.player,
@@ -20,16 +20,19 @@ class GameState {
     this.matrix = 0,
     this.gameTable = const [],
     this.rowStatus = const [],
-    this.retryPoint = 3,
+    this.lives = 3,
     this.isWin = false,
+    this.isEnd = false,
   });
 }
 
 class GameBloc extends Bloc<GameEvent, GameState> {
   GameBloc(GameState state) : super(state) {
     _gameSetup();
+    _generateGameTable();
     on<GameCellPressed>(_onGameCellPressed);
-    on<GameEnded>(_onGameEnded);
+    on<GameRetryPressed>(_onGameRetryPressed);
+    on<GameOver>(_onGameEnded);
   }
 
   @override
@@ -38,6 +41,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   }
 
   void _gameSetup() {
+    state.isEnd = false;
     if (state.difficulty == GameDifficulty.easy) {
       state.matrix = 3;
       state.point = 100;
@@ -48,7 +52,6 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       state.matrix = 5;
       state.point = 10000;
     }
-    _generateGameTable();
     _setRowStatus();
   }
 
@@ -81,18 +84,19 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     emit(state);
   }
 
-  void _onGameEnded(GameEnded event, Emitter<GameState> emit) {
-    if (state.point > 0 || state.point < 0) {
-      state.retryPoint--;
-      if (state.retryPoint == 0) {
-        emit(state);
-      } else {
-        _gameSetup();
-        emit(state);
-      }
-    } else if (state.point == 0) {
+  void _onGameEnded(GameOver event, Emitter<GameState> emit) {
+    state.isEnd = true;
+    if (state.point == 0) {
       state.isWin = true;
       emit(state);
+    } else {
+      emit(state);
     }
+  }
+
+  void _onGameRetryPressed(GameRetryPressed event, Emitter<GameState> emit) {
+    state.lives--;
+    _gameSetup();
+    emit(state);
   }
 }
