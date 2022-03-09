@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:plusminus/bloc/events/game_event.dart';
 import 'package:plusminus/bloc/game_bloc.dart';
-import 'package:plusminus/widgets/cell.dart';
+import 'package:plusminus/widgets/cell_widget.dart';
 
 class GamePage extends StatefulWidget {
   const GamePage({Key? key}) : super(key: key);
@@ -33,7 +33,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       })
       ..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
-          context.read<GameBloc>().add(GameOver());
+          // context.read<GameBloc>().add(GameOver());
         }
       });
 
@@ -44,7 +44,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => GameBloc(GameState(
-        difficulty: GameDifficulty.medium,
+        difficulty: GameDifficulty.easy,
         player: 'Tarius',
       )),
       child: Scaffold(
@@ -84,15 +84,17 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                     children: [
                       Table(
                         border: TableBorder.all(color: Colors.black),
-                        defaultColumnWidth: const FixedColumnWidth(50),
-                        children: generateTableRow(context, state),
+                        defaultColumnWidth: const FixedColumnWidth(100),
+                        // children: CellWidget.generateCell(state),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  if (state.isEnd)
+                  if (true)
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        context.read<GameBloc>().add(GameRetryPressed());
+                      },
                       child: const Text('Restart'),
                     ),
                   const Spacer()
@@ -105,65 +107,8 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     );
   }
 
-  List<TableRow> generateTableRow(BuildContext context, GameState state) {
-    List<TableRow> rows = [];
-    for (int row = 0; row < state.gameTable.length; row++) {
-      rows.add(TableRow(
-        children: generateTableCell(context, state, row),
-      ));
-    }
-    return rows;
-  }
-
-  List<Widget> generateTableCell(
-    BuildContext context,
-    GameState state,
-    int rowIndex,
-  ) {
-    List<Widget> cells = [];
-    final status = state.rowStatus[rowIndex];
-    final row = state.gameTable[rowIndex];
-
-    void onClickCell(int cellPoint) {
-      context.read<GameBloc>().add(GameCellPressed(rowIndex, cellPoint));
-      setState(() {});
-      if (rowIndex == state.matrix) {
-        _timerController.stop();
-      }
-    }
-
-    for (var cell in row) {
-      cells.add(
-        Cell(
-          content: GestureDetector(
-            onTap: status == CellStatus.active || state.isEnd
-                ? () {
-                    onClickCell(cell);
-                  }
-                : null,
-            child: Container(
-              decoration: BoxDecoration(
-                color:
-                    status == CellStatus.inactive ? Colors.grey : Colors.white,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Center(
-                  child: Text(
-                    "$cell",
-                    style: TextStyle(
-                        color: status == CellStatus.inactive
-                            ? Colors.grey
-                            : Colors.black),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-    return cells;
+  Color isSelected(CellStatus status) {
+    return status == CellStatus.selected ? Colors.blue : Colors.white;
   }
 }
 

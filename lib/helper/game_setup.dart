@@ -1,6 +1,6 @@
 import 'dart:math';
 
-int seedTableGenerator(int range) {
+int cellGenerator(int range) {
   Random random = Random();
   int randomNumber = random.nextInt(range);
   return randomNumber;
