@@ -1,9 +1,16 @@
 import 'dart:math';
 
-int cellGenerator(int range) {
-  Random random = Random();
-  int randomNumber = random.nextInt(range);
-  return randomNumber;
+int valueCellGenerator(
+  int range,
+  List<int> listCorrect,
+  int row,
+  int cellIndex,
+) {
+  if (row == cellIndex) {
+    return listCorrect[row];
+  }
+  int random = Random().nextInt((range ~/ 2));
+  return random;
 }
 
 List<int> listCorrect(int point, int matrix) {

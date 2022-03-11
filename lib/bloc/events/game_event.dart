@@ -1,9 +1,9 @@
 abstract class GameEvent {}
 
 class GameCellPressed extends GameEvent {
-  final int row, cell, value;
+  final int row, value, cellId;
 
-  GameCellPressed(this.row, this.cell, this.value);
+  GameCellPressed(this.cellId, this.row, this.value);
 }
 
 class GameRetryPressed extends GameEvent {}

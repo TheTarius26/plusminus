@@ -29,7 +29,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   GameBloc(GameState state) : super(state) {
     _gameSetup();
     state.cells = _generateGameCells();
-    // on<GameCellPressed>(_onGameCellPressed);
+    on<GameCellPressed>(_onGameCellPressed);
     on<GameRetryPressed>(_onGameRetryPressed);
     on<GameOver>(_onGameEnded);
   }
@@ -64,7 +64,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
           id: "$row-$cell",
           row: row,
           status: CellStatus.inactive,
-          value: correctList[row * state.matrix + cell],
+          value: valueCellGenerator(state.point, correctList, row, cell),
         ),
       );
       tempCells.shuffle();
@@ -75,13 +75,11 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       cells[i].status = CellStatus.active;
     }
 
-    print('cells: ${cells}');
-    print('listCorrect: ${correctList}');
     return cells;
   }
 
   void _onGameCellPressed(GameCellPressed event, Emitter<GameState> emit) {
-    state.cells[event.cell].status = CellStatus.selected;
+    state.cells[event.cellId].status = CellStatus.selected;
     state.point -= event.value;
     emit(state);
   }

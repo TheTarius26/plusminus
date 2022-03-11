@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:plusminus/bloc/events/game_event.dart';
 import 'package:plusminus/bloc/game_bloc.dart';
+import 'package:plusminus/data/model/cell.dart';
 import 'package:plusminus/widgets/cell_widget.dart';
 
 class GamePage extends StatefulWidget {
@@ -85,7 +86,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                       Table(
                         border: TableBorder.all(color: Colors.black),
                         defaultColumnWidth: const FixedColumnWidth(100),
-                        // children: CellWidget.generateCell(state),
+                        children: [],
                       ),
                     ],
                   ),
