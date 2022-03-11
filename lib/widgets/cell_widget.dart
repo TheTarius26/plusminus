@@ -1,48 +1,50 @@
+import 'dart:js';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:plusminus/bloc/events/game_event.dart';
 import 'package:plusminus/bloc/game_bloc.dart';
+import 'package:plusminus/bloc/states/game_state.dart';
 import 'package:plusminus/data/model/cell.dart';
+import 'package:plusminus/data/model/cell_status.dart';
 
 class CellWidget extends StatefulWidget {
-  final int cellId;
   final CellStatus status;
   final int value;
   final int row;
+  final void Function() onTap;
 
   const CellWidget({
     Key? key,
-    required this.cellId,
     required this.status,
     required this.value,
     required this.row,
+    required this.onTap,
   }) : super(key: key);
 
   @override
   State<CellWidget> createState() => _CellWidgetState();
 
-  static List<TableRow> cellToTable(GameState state) {
-    List<TableRow> table = [];
-    int cellIndex = 0;
+  static List<TableRow> cellToTable(GameLoadSuccess state) {
+    final table = state.listCell
+        .map(
+          (e) => TableRow(
+            children: e
+                .map(
+                  (e) => CellWidget(
+                      status: e.status,
+                      value: e.value,
+                      row: e.row,
+                      onTap: () {
+                        state.point--;
+                      }),
+                )
+                .toList(),
+          ),
+        )
+        .toList();
 
-    List<Cell> cells = state.cells;
-
-    for (int row = 0; row < state.matrix; row++) {
-      List<CellWidget> rowCells = [];
-      for (int col = 0; col < state.matrix; col++) {
-        Cell cell = cells[cellIndex];
-        rowCells.add(CellWidget(
-          cellId: cellIndex,
-          status: cell.status,
-          value: cell.value,
-          row: cell.row,
-        ));
-        cellIndex++;
-      }
-      print(rowCells.map((e) => e.status).toList());
-      table.add(TableRow(children: rowCells));
-    }
-
+    print(table);
     return table;
   }
 }
@@ -66,14 +68,8 @@ class _CellWidgetState extends State<CellWidget> {
     );
   }
 
-  void onClickCell() {
-    context
-        .read<GameBloc>()
-        .add(GameCellPressed(widget.cellId, widget.row, widget.value));
-  }
-
   void Function()? isStatusActive() {
-    return widget.status == CellStatus.active ? onClickCell : null;
+    return widget.status == CellStatus.active ? widget.onTap : null;
   }
 
   Color isSelected() {

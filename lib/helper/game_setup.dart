@@ -1,7 +1,7 @@
 import 'dart:math';
 
 int valueCellGenerator(
-  int range,
+  int point,
   List<int> listCorrect,
   int row,
   int cellIndex,
@@ -9,7 +9,7 @@ int valueCellGenerator(
   if (row == cellIndex) {
     return listCorrect[row];
   }
-  int random = Random().nextInt((range ~/ 2));
+  int random = Random().nextInt((point ~/ 2));
   return random;
 }
 

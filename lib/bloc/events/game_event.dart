@@ -1,11 +1,19 @@
+import 'package:plusminus/data/model/game_difficulty.dart';
+
 abstract class GameEvent {}
 
-class GameCellPressed extends GameEvent {
-  final int row, value, cellId;
+class GameStarted extends GameEvent {
+  final GameDifficulty difficulty;
 
-  GameCellPressed(this.cellId, this.row, this.value);
+  GameStarted(this.difficulty);
 }
 
-class GameRetryPressed extends GameEvent {}
+class GameLoading extends GameEvent {
+  int point, matrix;
 
-class GameOver extends GameEvent {}
+  GameLoading(this.point, this.matrix);
+}
+
+class GameRestartPressed extends GameEvent {}
+
+class GameEndPressed extends GameEvent {}
